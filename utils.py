@@ -1,4 +1,6 @@
 from tensorflow.python.client import device_lib
+import matplotlib.pyplot as plt
+import numpy as np
 from pathlib import Path
 import czifile
 import nd2
@@ -130,3 +132,43 @@ def save_rois(viewer, directory_path, filename):
 
         # Save mask (binary image)
         tifffile.imwrite(roi_path, mask)
+
+def plot_segmentation(plots):
+    """Takes as an input a list of dictionaries containing filename, roi_name and numpy arrays for input image and resulting marker+ ROI"""
+    
+    for plot in plots:
+
+        # Dynamically set the number of subplots based on the number of markers
+        subplots_nr = len(plot["markers"]) * 2  # Total number of subplots
+
+        plt.figure(figsize=(50, 25))  # Slightly larger figure for better readability
+
+        position = 1
+
+        # Suptitle for the entire figure
+        plt.suptitle(f"Filename: {plot['filename']}    ROI: {plot['roi']}", 
+                     fontsize=50, fontweight="bold", y=1.05)  # y > 1 moves it up
+
+        for marker in plot["markers"]:
+            img1 = marker[1]  # First image (grayscale)
+            img2 = marker[2]  # Second image (mask)
+            
+            # Stretch contrast for the first image only
+            vmin1, vmax1 = np.min(img1), np.max(img1)
+
+            plt.subplot(1, subplots_nr, position)
+            plt.imshow(img1, cmap="gray", vmin=vmin1, vmax=vmax1)  # Adjust contrast
+            plt.title(f'Input {marker[0]} MIP Image', fontsize=50)
+            plt.axis("off")
+            position += 1
+
+            plt.subplot(1, subplots_nr, position)
+            plt.imshow(img2, cmap="viridis")  # No contrast adjustment for mask
+            plt.title(f"{marker[0]}+_ROI", fontsize=50)
+            plt.axis("off")
+            position += 1
+
+    plt.tight_layout()  # Adjusts layout to reduce space
+    plt.subplots_adjust(top=0.95)  # Moves subplots down to create more space for suptitle
+
+    plt.show()
